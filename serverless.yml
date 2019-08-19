@@ -1,0 +1,38 @@
+service: medihunter-bot
+provider:
+  name: aws
+  runtime: python3.7
+  stage: ${opt:stage}
+  region: ${opt:region}
+
+custom:
+  pythonRequirements:
+    dockerizePip: false
+
+package:
+  include:
+    - "./*.py"
+
+functions:
+  medihunter:
+    handler: handler.check
+    environment:
+      TABLE_NAME: !Ref scheduleTable
+      SECRET_KEY: ${ssm:/medihunter/${opt:stage}/secret_key}
+
+resources:
+  Resources:
+    scheduleTable:
+      Type: AWS::DynamoDB::Table
+      Properties:
+        AttributeDefinitions:
+          - AttributeName: id
+            AttributeType: S
+        KeySchema:
+          - AttributeName: id
+            KeyType: HASH
+        BillingMode: PAY_PER_REQUEST
+      
+
+plugins:
+  - serverless-python-requirements
